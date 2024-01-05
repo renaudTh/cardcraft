@@ -42,3 +42,66 @@ impl R7Game {
         }
     }
 }
+
+impl CardGame for R7Game {
+
+    fn play_card(&mut self) -> ActionResult {
+    
+        let mut card_to_play: Card = match self.deck.pop_front() {
+            Some(card) => card,
+            None => return ActionResult {
+                state_changed: false,
+                need_iterate: false,
+            },
+        };
+        card_to_play.flip();
+        let index = card_to_play.family() as usize;
+        //We can unwrap since build stacks are never empty
+        let top_card = self.build[index].read_first().unwrap();
+        let bottom_card = self.build[index].read_last().unwrap();
+        if card_to_play.value() == top_card.value() + 1 {
+            self.build[index].add_card_on(card_to_play);
+        }
+        else if card_to_play.value() == bottom_card.value() - 1 {
+            self.build[index].add_card_under(card_to_play);
+        } 
+        else {
+          self.bin.add_card_on(card_to_play);
+        }
+        return ActionResult {
+            need_iterate: true,
+            state_changed: true,
+        }; 
+    }
+
+    fn iterate(&mut self) -> ActionResult {
+        let mut state_changed = false;
+        let need_iterate = false;
+        self.nb_attempt+=1;
+        if self.bin.is_empty() {
+            return ActionResult {
+                state_changed,
+                need_iterate,
+            }
+        }
+        state_changed = true;
+        self.bin.flip();
+        self.deck.append_on_bottom(&mut self.bin);
+        return ActionResult {
+            state_changed,
+            need_iterate,
+        }
+    }
+
+    fn ended(&self) -> bool {
+        self.won() || self.nb_attempt >= 3
+    }
+
+    fn won(&self) -> bool {
+        self.nb_attempt <= 3 && self.deck.size() == 0
+    }
+
+    fn reinitialize(&mut self) {
+        todo!()
+    }
+}
