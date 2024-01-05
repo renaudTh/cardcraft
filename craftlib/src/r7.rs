@@ -105,3 +105,55 @@ impl CardGame for R7Game {
         todo!()
     }
 }
+
+mod tests {
+    use crate::card_game::play_card_game;
+    use super::*;
+    
+
+    #[test]
+    fn add_next_upper_card(){
+        let mut rg = R7Game::new();
+        rg.init_empty();
+        rg.deck.add_card_on(Card::new(0, 8, true));
+        let res = rg.play_card();
+        assert!(res.need_iterate);
+        assert!(res.state_changed);
+        assert_eq!(rg.build[0].size(), 2);
+        let top = rg.build[0].read_first();
+        assert!(top.is_some_and(|card| card.value() == 8));
+    }
+    #[test]
+    fn add_next_lower_card(){
+        let mut rg = R7Game::new();
+        rg.init_empty();
+        rg.deck.add_card_on(Card::new(0, 6, true));
+        let res = rg.play_card();
+        assert!(res.need_iterate);
+        assert!(res.state_changed);
+        assert_eq!(rg.build[0].size(), 2);
+        let bottom = rg.build[0].read_last();
+        assert!(bottom.is_some_and(|card| card.value() == 6));
+    }
+    #[test]
+    fn add_unplayable_card(){
+        let mut rg = R7Game::new();
+        rg.init_empty();
+        rg.deck.add_card_on(Card::new(0, 13, true));
+        let res = rg.play_card();
+        assert!(res.need_iterate);
+        assert!(res.state_changed);
+        assert_eq!(rg.build[0].size(), 1);
+        let bottom = rg.bin.read_last();
+        assert!(bottom.is_some_and(|card| card.value() == 13));
+    }
+    #[test]
+    fn test_winning_in_one_attempt(){
+        let mut game = R7Game::new();
+        game.init_winning_game_in_one_attempt();
+        let won = play_card_game(&mut game);
+        assert!(won);
+        assert_eq!(game.nb_attempt, 1);
+    }
+
+}
