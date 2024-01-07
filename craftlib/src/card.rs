@@ -1,7 +1,10 @@
 pub struct Card {
     card: u8
 }
-
+/**
+ * Card model on 8 bits: 
+ * 
+ */
 impl Card {
     pub fn new(family: u8, value: u8, is_visible: bool) -> Card {
         let mut v: u8 = 0;
@@ -48,6 +51,9 @@ impl Card {
     pub fn equal(&self, other: &Card) -> bool {
         self.value() == other.value() && self.family() == other.family()
     }
+    pub fn raw(&self) -> u8 {
+        self.card
+    }
 }
 #[cfg(test)]
 mod tests {
@@ -56,9 +62,11 @@ mod tests {
     #[test]
     fn test_new_visible_card() {
         let card = Card::new(2, 5, true);
-        assert_eq!(card.family(), 2);
+        assert_eq!(card.family(),2);
         assert_eq!(card.value(), 5);
         assert_eq!(card.is_visible(), true);
+        let v = card.raw();
+        assert_eq!(v, 150);
     }
     #[test]
     fn test_new_hidden_card() {

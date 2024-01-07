@@ -1,4 +1,4 @@
-use crate::{stack::Stack, card_game::{CardGame, ActionResult}, card::Card};
+use crate::{stack::Stack, card_game::{CardGame, ActionResult, GameState}, card::Card};
 
 pub struct R7Game {
     build: Vec<Stack>,
@@ -8,7 +8,7 @@ pub struct R7Game {
 }
 impl R7Game {
     pub fn new() -> R7Game{
-        let deck = Stack::new_empty();
+        let deck = Stack::new_complete_deck(32, false, false);
         let bin = Stack::new_empty();
         let mut build = Vec::<Stack>::new();
         for _i in 0..4{
@@ -21,7 +21,7 @@ impl R7Game {
             nb_attempt: 0
         }
     }
-    fn init_winning_game_in_one_attempt(&mut self) {
+    pub fn init_winning_game_in_one_attempt(&mut self) {
         for f in 0usize..4usize{
             let c = Card::new(f as u8, 7, true);
             self.build[f].add_card_on(c);
@@ -34,6 +34,14 @@ impl R7Game {
                 self.deck.add_card_under(c);
             }
         }
+    }
+    pub fn init_random(&mut self){
+        for f in 0..4 {
+            let mut seven = self.deck.pick_one(&Card::new(f, 7, false)).unwrap();
+            seven.flip();
+            self.build[f as usize].add_card_on(seven);
+        }
+        self.deck.shuffle();
     }
     fn init_empty(&mut self){
         for f in 0u8..4u8 {
@@ -104,13 +112,25 @@ impl CardGame for R7Game {
     fn reinitialize(&mut self) {
         todo!()
     }
+    fn get_game_state(&self) -> GameState {
+        let mut state = GameState::new();
+        state.set_header(3, 6, 6, self.ended(), self.won());
+        state.add_stack(0, 0, false, &self.deck);  
+        state.add_stack(1, 0, false, &self.bin);   
+
+        let mut x = 1;
+        for build in &self.build {
+            state.add_stack(x, 1, true ,build);
+            x+=1;
+        }
+        return state;
+    }
 }
 
 mod tests {
     use crate::card_game::play_card_game;
     use super::*;
     
-
     #[test]
     fn add_next_upper_card(){
         let mut rg = R7Game::new();

@@ -3,3 +3,4 @@ pub mod stack;
 pub mod card_game;
 pub mod r7;
 pub mod c4;
+pub mod game_factory;

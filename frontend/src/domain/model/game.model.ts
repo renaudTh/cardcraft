@@ -1,7 +1,7 @@
 export enum CardFamily {
     CLUB,
-    DIAMOND,
     HEART,
+    DIAMOND,
     SPADE,
 }
 
@@ -15,6 +15,7 @@ export interface Stack {
     cards: Card[],
     rowPosition: number,
     columnPosition: number,
+    spread: boolean,
 }
 
 export interface GameState{
@@ -25,7 +26,4 @@ export interface GameState{
 export interface GameTable {
     rowNumber: number,
     columnNumber: number,
-    cardWidth: number,
-    cardHeight: number,
-    state?: GameState,
 }

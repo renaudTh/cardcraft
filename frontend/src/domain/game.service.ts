@@ -15,7 +15,7 @@ export class GameService implements IGameService {
     async initGame(id: string): Promise<void> {
         this._id = id;
         const t = await this.provider.getGameTable(id);
-        const state = await this.provider.getGameState(id);
+        const state = await this.provider.startGame(id);
         this._gameStateSubject.next(state);
     }
     async getGameTable(id: string): Promise<GameTable> {

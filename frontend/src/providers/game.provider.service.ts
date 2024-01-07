@@ -1,67 +1,70 @@
+
+import { GameFactory } from "cardcraft";
 import { IGameProvider } from "src/domain/game.provider.interface";
 import { GameTable, GameState, Stack, Card } from "src/domain/model/game.model";
 
 
 
 const GAME_TABLE: GameTable = {
-    cardHeight: 314,
-    cardWidth: 226,
     columnNumber: 6,
     rowNumber: 3,
 }
-
+function parseCard(c: number): Card{
+    return {
+        family: c & 0x3,
+        value: (c & 0x7C) >> 2,
+        visible: (c & 0x80) >> 7 == 1
+    }
+}
+function parseGameState(raw: Uint8Array) : GameState {
+    const rows = raw[0];
+    const columns = raw[1];
+    const nbStacks = raw[2];
+    const isWon = raw[3] == 1;
+    const isEnded = raw[4] == 1;
+    let read = 5;
+    const stacks:Stack[] = [];
+    for(let s = 0; s < nbStacks; s++){
+        const columnPosition = raw[read++];
+        const rowPosition = raw[read++];
+        const spread = raw[read++] == 1;
+        const size = raw[read++];
+        const cards:Card[] = []
+        for(let c = 0; c <size; c++){
+            cards.push(parseCard(raw[read+c]))
+        }
+        stacks.push({
+            cards,
+            columnPosition,
+            rowPosition,
+            spread
+        })
+        read+=size;
+    }
+    return {
+        isEnded,
+        isWon,
+        stacks
+    }
+}
 export class GameProviderService implements IGameProvider {
 
-    private _build: Stack[];
-    private _deck: Stack;
-    private _state: GameState;
-
+    private _factory: GameFactory;
     constructor(){
-        this._deck = {
-            cards: [],
-            rowPosition: 0,
-            columnPosition: 0,
-        }
-        this._build = []
-        for(let f = 0; f < 4; f++){ 
-            this._build.push({
-                cards: [],
-                columnPosition: f+1,
-                rowPosition: 1
-            });
-            for(let v = 7; v <=14; v++){
-                this._deck.cards.push({
-                    family: f,
-                    value: v,
-                    visible: false
-                })
-            }
-        }
-        this._state = {
-            isEnded: false,
-            isWon: false,
-            stacks: [...this._build, this._deck]
-        }
+        this._factory = GameFactory.new();
+    }
+    startGame(id: string): Promise<GameState> {
+        const state = this._factory.init();
+        return Promise.resolve(parseGameState(state));
     }
     getGameTable(id: string): Promise<GameTable> {
         return Promise.resolve(GAME_TABLE);
     }
     getGameState(id: string): Promise<GameState> {
-        return Promise.resolve(this._state);
+        throw new Error("Method not implemented.");
     }
     playMove(id: string): Promise<GameState> {
-        const card = this._deck.cards.pop();
-        if(card){
-            this._build[card.family].cards.push({
-                ...card,
-                visible: true,
-            })
-        }
-        else {
-            this._state.isEnded = true;
-            this._state.isWon = false;
-        }
-        return Promise.resolve(this._state);
+        const state = this._factory.play_move();
+        return Promise.resolve(parseGameState(state));
     }
-        
 }

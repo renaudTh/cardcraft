@@ -1,6 +1,6 @@
-use std::collections::VecDeque;
+use std::{collections::VecDeque, ops::IndexMut};
 use crate::card::Card;
-
+use rand::{thread_rng, seq::SliceRandom};
 pub struct Stack {
     _deck: VecDeque<Card>
 }
@@ -9,6 +9,15 @@ impl Stack {
     pub fn new_empty() -> Stack{
         Stack {
             _deck: VecDeque::new()
+        }
+    }
+    pub fn shuffle(&mut self) {
+        self._deck.make_contiguous().shuffle(&mut thread_rng())
+    }
+    pub fn pick_one(&mut self, card: &Card) -> Option<Card> {
+        match self._deck.iter().position(|c| c.equal(card)) {
+            Some(index) => self._deck.remove(index),
+            None => None
         }
     }
     pub fn size(&self) -> usize {
@@ -32,9 +41,6 @@ impl Stack {
     pub fn flip(&mut self){
       self._deck.make_contiguous().reverse();
       self._deck.iter_mut().for_each(|card| card.flip());
-    }
-    pub fn shuffle(&mut self){
-        
     }
     pub fn new_complete_deck(card_nb: u8, visible: bool, ace_is_max: bool) -> Stack{
         let (min, max) = if card_nb == 32 {
@@ -79,12 +85,14 @@ impl Stack {
     pub fn pop_back(&mut self) -> Option<Card>{
         self._deck.pop_back() 
     }
+    pub fn raw(&self) -> Vec<u8> {
+        self._deck.iter().map(|c| c.raw()).collect()
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-
     #[test]
     fn test_new_empty_stack() {
         let stack = Stack::new_empty();
